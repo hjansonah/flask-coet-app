@@ -1,175 +1,151 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>Coët {{ index + 1 }}/{{ total }}</title>
+    <meta charset="UTF-8">
+    <title>Record {{ index + 1 }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        :root {
-            --bg-color: #121212;
-            --card-color: #1e1e1e;
-            --text-color: #e0e0e0;
-            --border-color: #333;
-            --accent: #007BFF;
-            --accent-muted: #555;
-        }
-
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background: var(--bg-color);
-            color: var(--text-color);
+            margin: 2rem;
+            background-color: #111;
+            color: #fff;
         }
 
-        .card {
-            max-width: 480px;
-            margin: auto;
-            background: var(--card-color);
-            padding: 24px;
-            border-radius: 16px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
-        }
-
-        h2 {
-            text-align: center;
-            font-size: 1.4rem;
-            margin-bottom: 24px;
-            color: var(--text-color);
-        }
-
-        select, p {
-            font-size: 1rem;
-            width: 100%;
-            padding: 12px;
-            margin-top: 6px;
-            background: #222;
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            box-sizing: border-box;
-        }
-
-        .nav-buttons {
+        .navigation {
             display: flex;
             justify-content: space-between;
-            margin-top: 32px;
+            margin-bottom: 1.5rem;
         }
 
-        .nav-buttons a {
-            background: var(--accent);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: bold;
-            flex: 1;
-            text-align: center;
-            margin: 0 4px;
-        }
-
-        .nav-buttons span {
-            background: var(--accent-muted);
-            color: #999;
-            pointer-events: none;
-            text-align: center;
-            padding: 12px 20px;
-            border-radius: 8px;
-            flex: 1;
-            margin: 0 4px;
-        }
-
-        .resume {
-            margin-top: 20px;
-            text-align: center;
-        }
-
-        .resume button {
-            background: var(--accent);
-            color: white;
-            padding: 10px 20px;
-            font-size: 1rem;
+        .btn {
+            padding: 0.5rem 1rem;
             border: none;
             border-radius: 8px;
+            font-size: 1rem;
             cursor: pointer;
         }
 
-        .resume button:disabled {
-            background: var(--accent-muted);
-            cursor: not-allowed;
+        .btn-small {
+            background-color: #444;
+            color: #fff;
+        }
+
+        .btn-next {
+            background-color: #1e90ff;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .coet-text {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin: 1rem 0;
+        }
+
+        .field {
+            margin-bottom: 0.5rem;
+        }
+
+        .toggle {
+            width: 120px;
+            height: 120px;
+            background-color: #333;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+       position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .toggle.valid {
+            background-color: #007bff;
+        }
+
+        .toggle.invalid {
+            background-color: #001f3f;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                margin: 1rem;
+                font-size: 1rem;
+            }
+
+            .btn-next {
+                font-size: 1rem;
+            }
         }
     </style>
-
     <script>
-        function updateValue(index, value) {
-            fetch('/update', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `index=${index}&value=${value}`
-            }).then(res => res.json())
-              .then(data => {
-                  if (data.success) {
-                      console.log(`Record ${index} updated`);
-                  }
-              });
-        }
-
-        // Save the current index in localStorage
-        const currentIndex = {{ index }};
-        localStorage.setItem('lastRecordIndex', currentIndex);
-
-        // Ping server every 2 minutes to keep session alive
-        setInterval(() => {
-            fetch('/ping');
-        }, 120000); // 2 minutes
-
-        // Resume button click handler
-        function resumeLastRecord() {
-            const last = localStorage.getItem('lastRecordIndex');
-            if (last !== null) {
-                window.location.href = `/record/${last}`;
-            }
+        function toggleStillValid(index, isValid) {
+            fetch("/update", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({
+                    index: index,
+                    value: !isValid
+                })
+            }).then(res => res.json()).then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
         }
     </script>
 </head>
 <body>
-    <div class="card">
-        <h2>{{ index + 1 }} / {{ total }}</h2>
 
-        <p>{{ row['Coët'] }}</p>
-
-        <p>{{ row['Source'] }}</p>
-        <p>{{ row['date coët'] }}</p>
-
-        <select onchange="updateValue({{ index }}, this.value)">
-            <option value="True" {% if row['Still valid'] == True %}selected{% endif %}>True</option>
-            <option value="False" {% if row['Still valid'] == False %}selected{% endif %}>False</option>
-        </select>
-
-        <div class="nav-buttons">
-            {% if index > 0 %}
-                <a href="{{ url_for('record', index=index-1) }}">⬅ Previous</a>
-            {% else %}
-                <span>⬅ Previous</span>
-            {% endif %}
-
-            {% if index + 1 < total %}
-                <a href="{{ url_for('record', index=index+1) }}">Next ➡</a>
-            {% else %}
-                <span>Next ➡</span>
-            {% endif %}
-        </div>
-
-        <div class="resume">
-            <button onclick="resumeLastRecord()">Go to Last Seen Record</button>
-        </div>
-
-        <!-- Example of escaped Access connection string -->
-        <pre>
-{% raw %}
-Driver={{Microsoft Access Driver (*.mdb, *.accdb)}};
-{% endraw %}
-        </pre>
+    <div class="field">
+        <button class="toggle {% if row['Still valid'] %}valid{% else %}invalid{% endif %}"
+                onclick="toggleStillValid({{ index }}, {{ row['Still valid'] | lower }})">
+        </button>
     </div>
+
+    <div class="coet-text">{{ row['Coet'] }}</div>
+
+    <div class="field"><strong>Source:</strong> {{ row['Source'] }}</div>
+    <div class="field"><strong>Date Coet:</strong>
+        {{ row['date coet'].strftime("%d %b %Y") if row['date coet'] else '' }}
+    </div>
+
+<script>
+    // Swipe support (mobile)
+    let touchStartX = 0;
+    let touchEndX = 0;
+    const threshold = 50;
+
+    document.addEventListener("touchstart", function(e) {
+        touchStartX = e.changedTouches[0].screenX;
+    });
+
+    document.addEventListener("touchend", function(e) {
+        touchEndX = e.changedTouches[0].screenX;
+        handleGesture();
+    });
+
+    function handleGesture() {
+        if (touchEndX < touchStartX - threshold) {
+            window.location.href = "{{ url_for('next_record', index=index) }}"; // swipe left
+        } else if (touchEndX > touchStartX + threshold) {
+            window.location.href = "{{ url_for('previous_record', index=index) }}"; // swipe right
+        }
+    }
+
+    // Keyboard arrow key support (desktop)
+    document.addEventListener("keydown", function(e) {
+        if (e.key === "ArrowRight") {
+            window.location.href = "{{ url_for('next_record', index=index) }}";
+        } else if (e.key === "ArrowLeft") {
+            window.location.href = "{{ url_for('previous_record', index=index) }}";
+        }
+    });
+</script>
+
+
 </body>
 </html>
