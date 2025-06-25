@@ -5,12 +5,14 @@ import psycopg2
 app = Flask(__name__)
 CORS(app)
 
+import os
+
 DB_PARAMS = {
-    "dbname": "postgres",
-    "user": "postgres",
-    "password": "bouncym2025",
-    "host": "127.0.0.1",
-    "port": "5432"
+    "dbname": os.getenv("DB_NAME"),
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "host": os.getenv("DB_HOST"),
+    "port": os.getenv("DB_PORT", "5432")
 }
 
 # Fetch all reviewed record IDs
