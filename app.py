@@ -19,7 +19,7 @@ DB_PARAMS = {
 def get_reviewed_ids():
     conn = psycopg2.connect(**DB_PARAMS)
     cur = conn.cursor()
-    cur.execute('SELECT "ID" FROM "Coets Android appended" WHERE last_reviewed IS NOT NULL ORDER BY last_reviewed')
+    cur.execute('SELECT "ID" FROM "coets_android_appended" WHERE last_reviewed IS NOT NULL ORDER BY last_reviewed')
     ids = [r[0] for r in cur.fetchall()]
     cur.close()
     conn.close()
@@ -30,7 +30,7 @@ def index():
     # Redirect to the next unreviewed record
     conn = psycopg2.connect(**DB_PARAMS)
     cur = conn.cursor()
-    cur.execute('SELECT "ID" FROM "Coets Android appended" WHERE last_reviewed IS NULL ORDER BY "ID" LIMIT 1')
+    cur.execute('SELECT "ID" FROM "coets_android_appended" WHERE last_reviewed IS NULL ORDER BY "ID" LIMIT 1')
     row = cur.fetchone()
     cur.close()
     conn.close()
@@ -50,7 +50,7 @@ def record(index):
 
     conn = psycopg2.connect(**DB_PARAMS)
     cur = conn.cursor()
-    cur.execute('SELECT * FROM "Coets Android appended" WHERE "ID" = %s', (record_id,))
+    cur.execute('SELECT * FROM "coets_android_appended" WHERE "ID" = %s', (record_id,))
     row = cur.fetchone()
     colnames = [desc[0] for desc in cur.description]
     row_dict = dict(zip(colnames, row))
@@ -72,7 +72,7 @@ def update():
 
     conn = psycopg2.connect(**DB_PARAMS)
     cur = conn.cursor()
-    cur.execute('UPDATE "Coets Android appended" SET "Still valid" = %s WHERE "ID" = %s', (value, record_id))
+    cur.execute('UPDATE "coets_android_appended" SET "Still valid" = %s WHERE "ID" = %s', (value, record_id))
     conn.commit()
     cur.close()
     conn.close()
@@ -84,7 +84,7 @@ def next_record(index):
     # Get next unreviewed record
     conn = psycopg2.connect(**DB_PARAMS)
     cur = conn.cursor()
-    cur.execute('SELECT "ID" FROM "Coets Android appended" WHERE last_reviewed IS NULL ORDER BY "ID" LIMIT 1')
+    cur.execute('SELECT "ID" FROM "coets_android_appended" WHERE last_reviewed IS NULL ORDER BY "ID" LIMIT 1')
     next_unreviewed = cur.fetchone()
 
     if not next_unreviewed:
@@ -95,11 +95,11 @@ def next_record(index):
     next_id = next_unreviewed[0]
 
     # Mark it reviewed
-    cur.execute('UPDATE "Coets Android appended" SET last_reviewed = CURRENT_TIMESTAMP WHERE "ID" = %s', (next_id,))
+    cur.execute('UPDATE "coets_android_appended" SET last_reviewed = CURRENT_TIMESTAMP WHERE "ID" = %s', (next_id,))
     conn.commit()
 
     # Recalculate reviewed list and find index
-    cur.execute('SELECT "ID" FROM "Coets Android appended" WHERE last_reviewed IS NOT NULL ORDER BY last_reviewed')
+    cur.execute('SELECT "ID" FROM "coets_android_appended" WHERE last_reviewed IS NOT NULL ORDER BY last_reviewed')
     reviewed_ids = [r[0] for r in cur.fetchall()]
     next_index = reviewed_ids.index(next_id)
 
