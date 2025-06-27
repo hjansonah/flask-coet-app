@@ -8,8 +8,8 @@ def index():
     return "Welcome to the app! Visit /hello-johann to see the HTML page."
 
 @app.route("/hello-johann")
-def hellojohann():
-    return render_template("hellojohann.html")
+def hello_johann():
+    return render_template("hello_johann.html")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # Use PORT env var (Render sets this)
