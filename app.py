@@ -34,7 +34,7 @@ def homepage():
 def record_preview():
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT * FROM coets_android_appended LIMIT 50;')
+    cur.execute('SELECT * FROM coets_appended LIMIT 50;')
     rows = cur.fetchall()
     cur.close()
     conn.close()
@@ -115,3 +115,5 @@ def previous_record(index):
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=True)
+
+
