@@ -4,7 +4,6 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify
 
 app = Flask(__name__)
 
-# Database connection parameters
 DB_PARAMS = {
     "host": "dpg-d1l8cgre5dus73fcn8mg-a.frankfurt-postgres.render.com",
     "port": 5432,
@@ -31,33 +30,38 @@ def homepage():
     return render_template('index.html')
 
 @app.route('/record')
-def record_preview():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('SELECT * FROM coets_appended LIMIT 50;')
-    rows = cur.fetchall()
-    cur.close()
-    conn.close()
-    return render_template('record.html', records=rows)
+def record():
+    index = request.args.get('index', default=None, type=int)
 
-@app.route("/record/<int:index>")
-def record(index):
-    reviewed_ids = get_reviewed_ids()
-    if index < 0 or index >= len(reviewed_ids):
-        return "Index out of range", 404
+    if index is None:
+        # No index given: show list of first 50 records
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute('SELECT * FROM "coets_appended" LIMIT 50')
+        rows = cur.fetchall()
+        colnames = [desc[0] for desc in cur.description]
+        records = [dict(zip(colnames, row)) for row in rows]
+        cur.close()
+        conn.close()
+        return render_template('record.html', records=records, record=None)
 
-    record_id = reviewed_ids[index]
+    else:
+        # Index given: show single record detail
+        reviewed_ids = get_reviewed_ids()
+        if index < 0 or index >= len(reviewed_ids):
+            return "Index out of range", 404
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('SELECT * FROM "coets_appended" WHERE "ID" = %s', (record_id,))
-    row = cur.fetchone()
-    colnames = [desc[0] for desc in cur.description]
-    row_dict = dict(zip(colnames, row))
-    cur.close()
-    conn.close()
+        record_id = reviewed_ids[index]
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute('SELECT * FROM "coets_appended" WHERE "ID" = %s', (record_id,))
+        row = cur.fetchone()
+        colnames = [desc[0] for desc in cur.description]
+        record = dict(zip(colnames, row))
+        cur.close()
+        conn.close()
 
-    return render_template("record_detail.html", row=row_dict, index=index, total=len(reviewed_ids))
+        return render_template('record.html', records=None, record=record, index=index, total=len(reviewed_ids))
 
 @app.route("/update", methods=["POST"])
 def update():
@@ -92,7 +96,6 @@ def next_record(index):
         return "No more unreviewed records", 404
 
     next_id = next_unreviewed[0]
-
     cur.execute('UPDATE "coets_appended" SET last_reviewed = CURRENT_TIMESTAMP WHERE "ID" = %s', (next_id,))
     conn.commit()
 
@@ -115,5 +118,3 @@ def previous_record(index):
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=True)
-
-
